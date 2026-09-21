@@ -1,0 +1,225 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ------------------------------------------------------------------ *
+ * Design tokens
+ * Single source of truth for colour, radius, shadow and motion.
+ * Consumed by Tailwind (tailwind.config.ts) and by the WebGL scene
+ * (src/lib/theme.ts reads these at runtime).
+ * ------------------------------------------------------------------ */
+:root,
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  --c-base: 240 14% 4%;
+  --c-surface: 240 12% 6%;
+  --c-elevated: 240 11% 9%;
+  --c-overlay: 240 12% 7%;
+  --c-line: 240 9% 16%;
+  --c-line-strong: 240 8% 24%;
+  --c-ink: 225 20% 93%;
+  --c-muted: 230 9% 65%;
+  --c-faint: 232 8% 45%;
+  --c-accent: 224 100% 68%;
+  --c-accent-soft: 224 100% 74%;
+  --c-positive: 158 64% 46%;
+  --c-warning: 38 92% 58%;
+  --c-danger: 352 88% 65%;
+
+  /* Node-type palette — each hue is a distinct architectural role. */
+  --n-repository: 43 92% 66%;
+  --n-directory: 221 94% 68%;
+  --n-module: 210 92% 62%;
+  --n-package: 258 90% 72%;
+  --n-file: 222 14% 62%;
+  --n-test: 158 64% 52%;
+  --n-config: 35 90% 62%;
+  --n-class: 280 86% 74%;
+  --n-interface: 193 92% 62%;
+  --n-function: 25 92% 66%;
+  --n-external: 344 88% 70%;
+
+  --scene-bg: 240 16% 3%;
+  --scene-fog: 240 16% 4%;
+  --scene-grid: 232 12% 18%;
+  --scene-edge: 228 14% 46%;
+
+  --shadow-panel: 0 1px 0 0 hsl(var(--c-line) / 0.6), 0 24px 60px -30px hsl(0 0% 0% / 0.9);
+  --shadow-pop: 0 18px 50px -12px hsl(0 0% 0% / 0.75), 0 0 0 1px hsl(var(--c-line) / 0.9);
+  --shadow-glow: 0 0 0 1px hsl(var(--c-accent) / 0.3), 0 8px 32px -8px hsl(var(--c-accent) / 0.35);
+}
+
+[data-theme='light'] {
+  color-scheme: light;
+
+  --c-base: 240 22% 98%;
+  --c-surface: 0 0% 100%;
+  --c-elevated: 240 26% 99%;
+  --c-overlay: 0 0% 100%;
+  --c-line: 233 18% 89%;
+  --c-line-strong: 233 14% 80%;
+  --c-ink: 232 34% 14%;
+  --c-muted: 231 12% 40%;
+  --c-faint: 231 10% 55%;
+  --c-accent: 224 86% 56%;
+  --c-accent-soft: 224 86% 48%;
+  --c-positive: 158 70% 32%;
+  --c-warning: 32 88% 42%;
+  --c-danger: 352 74% 48%;
+
+  --n-repository: 38 88% 46%;
+  --n-directory: 221 84% 54%;
+  --n-module: 210 84% 44%;
+  --n-package: 258 72% 58%;
+  --n-file: 222 12% 46%;
+  --n-test: 158 64% 34%;
+  --n-config: 32 86% 44%;
+  --n-class: 280 64% 56%;
+  --n-interface: 193 84% 38%;
+  --n-function: 22 82% 48%;
+  --n-external: 344 72% 54%;
+
+  --scene-bg: 235 30% 96%;
+  --scene-fog: 235 30% 95%;
+  --scene-grid: 232 16% 82%;
+  --scene-edge: 228 14% 56%;
+
+  --shadow-panel: 0 1px 0 0 hsl(var(--c-line) / 0.9), 0 18px 40px -28px hsl(232 40% 30% / 0.35);
+  --shadow-pop: 0 18px 44px -14px hsl(232 40% 30% / 0.25), 0 0 0 1px hsl(var(--c-line) / 0.9);
+  --shadow-glow: 0 0 0 1px hsl(var(--c-accent) / 0.35), 0 8px 28px -10px hsl(var(--c-accent) / 0.4);
+}
+
+:root {
+  --r-xs: 4px;
+  --r-sm: 6px;
+  --r-md: 8px;
+  --r-lg: 12px;
+  --r-xl: 16px;
+  --r-2xl: 24px;
+
+  --t-fast: 120ms;
+  --t-base: 200ms;
+  --t-slow: 420ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.32, 0.64, 1);
+
+  --topbar-h: 52px;
+  --bottombar-h: 34px;
+}
+
+@layer base {
+  * {
+    @apply border-line;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-base text-ink font-sans antialiased;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'ss01';
+    overscroll-behavior: none;
+  }
+
+  ::selection {
+    background: hsl(var(--c-accent) / 0.28);
+  }
+
+  :focus-visible {
+    outline: 2px solid hsl(var(--c-accent) / 0.9);
+    outline-offset: 2px;
+    border-radius: var(--r-xs);
+  }
+
+  /* Scrollbars — unobtrusive, matching panel chrome. */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--c-line-strong) / 0.7);
+    border: 3px solid transparent;
+    background-clip: content-box;
+    border-radius: 999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--c-faint) / 0.8);
+    background-clip: content-box;
+  }
+
+  canvas {
+    display: block;
+    touch-action: none;
+  }
+}
+
+@layer components {
+  .panel {
+    @apply border border-line bg-surface/80 backdrop-blur-xl;
+  }
+
+  .hairline {
+    @apply border-line;
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-sm border border-line bg-elevated/70 px-2 py-0.5 text-2xs font-medium text-muted;
+  }
+
+  .mono {
+    @apply font-mono text-[0.8125rem] tracking-tight;
+  }
+
+  /* Ambient page background — static radial depth, no animation. */
+  .bg-spatial {
+    background-image:
+      radial-gradient(900px 480px at 78% -8%, hsl(var(--c-accent) / 0.1), transparent 62%),
+      radial-gradient(720px 420px at 8% 4%, hsl(var(--n-package) / 0.08), transparent 60%),
+      radial-gradient(1000px 640px at 50% 108%, hsl(var(--n-interface) / 0.06), transparent 64%);
+  }
+
+  .bg-technical-grid {
+    background-image:
+      linear-gradient(hsl(var(--scene-grid) / 0.42) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--scene-grid) / 0.42) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(70% 60% at 50% 40%, #000 0%, transparent 100%);
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+@layer utilities {
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+
+  .stack-x-divide > * + * {
+    @apply border-l border-line;
+  }
+}
+
+/* Respect the OS-level reduced motion preference everywhere, including R3F
+ * driven transitions (see useSettingsStore). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
