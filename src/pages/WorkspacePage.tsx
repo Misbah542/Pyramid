@@ -49,13 +49,16 @@ export default function WorkspacePage() {
   useWorkspaceShortcuts();
 
   const repoParam = params.get('repo');
+  const refParam = params.get('ref');
   const isDemo = params.get('demo') === '1';
 
   /* Resolve what should be on screen: demo, an already-loaded graph, or a
    * redirect back to the analysis flow. */
   useEffect(() => {
     if (graph) {
-      const matchesRoute = isDemo ? graph.repository.isDemo : graph.repository.fullName === repoParam;
+      const matchesRoute = isDemo
+        ? graph.repository.isDemo
+        : graph.repository.fullName === repoParam && (!refParam || graph.repository.branch === refParam);
       if (matchesRoute) return;
     }
 
@@ -65,12 +68,14 @@ export default function WorkspacePage() {
     }
 
     if (repoParam && parseFullName(repoParam).ok) {
-      navigate(`/analyze?repo=${encodeURIComponent(repoParam)}`, { replace: true });
+      const search = new URLSearchParams({ repo: repoParam });
+      if (refParam) search.set('ref', refParam);
+      navigate(`/analyze?${search.toString()}`, { replace: true });
       return;
     }
 
     navigate('/', { replace: true });
-  }, [graph, isDemo, repoParam, loadGraph, navigate]);
+  }, [graph, isDemo, repoParam, refParam, loadGraph, navigate]);
 
   useEffect(() => {
     if (isMobile && selectedId) setSheetTab('inspector');
@@ -110,9 +115,9 @@ export default function WorkspacePage() {
                 <div className="flex items-end justify-between gap-3">
                   <VisualizationLegend className={cn(isMobile && 'hidden')} />
                   {isMobile ? (
-                    <p className="pointer-events-auto max-w-[16rem] rounded-md border border-line bg-surface/85 p-2 text-2xs leading-snug text-faint backdrop-blur">
-                      Drag to orbit, pinch to zoom, tap a node to inspect it. For the full workspace — explorer, filters
-                      and source preview side by side — open RepoVerse on a larger screen.
+                    <p className="pointer-events-auto mb-12 max-w-[16rem] rounded-md border border-line bg-surface/85 p-2 text-2xs leading-snug text-faint backdrop-blur">
+                      Drag to orbit, pinch to zoom, tap a node to inspect it. The full side-by-side workspace needs a
+                      larger screen.
                     </p>
                   ) : null}
                 </div>
@@ -176,10 +181,10 @@ function MobileSheet({ tab, onTab }: { tab: MobileTab | null; onTab: (tab: Mobil
     <>
       <div
         className={cn(
-          'fixed inset-x-0 bottom-0 z-panel flex flex-col rounded-t-xl border-t border-line bg-surface/97 shadow-pop backdrop-blur-xl transition-transform duration-base ease-out',
+          'fixed inset-x-0 z-panel flex flex-col rounded-t-xl border-t border-line bg-surface/97 shadow-pop backdrop-blur-xl transition-transform duration-base ease-out',
           open ? 'translate-y-0' : 'translate-y-[calc(100%-3rem)]',
         )}
-        style={{ height: '72dvh' }}
+        style={{ height: '70dvh', bottom: 'var(--bottombar-h)' }}
         role="dialog"
         aria-label="Workspace panels"
       >

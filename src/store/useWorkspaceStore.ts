@@ -27,6 +27,8 @@ export type GraphSource = 'demo' | 'live';
 export type CameraCommand =
   | { kind: 'focus'; nodeId: string; seq: number }
   | { kind: 'fit'; seq: number }
+  /** Fit the graph *and* move to a given viewing direction. */
+  | { kind: 'frame'; direction: [number, number, number]; seq: number }
   | { kind: 'reset'; seq: number };
 
 export interface WorkspaceState {
@@ -71,6 +73,7 @@ export interface WorkspaceState {
   isolate: (id: string | null) => void;
   focusNode: (id: string) => void;
   fitView: () => void;
+  frameView: (direction: [number, number, number]) => void;
   resetCamera: () => void;
   traceTo: (targetId: string) => void;
   clearTrace: () => void;
@@ -81,13 +84,17 @@ export interface WorkspaceState {
 let cameraSeq = 0;
 let layoutToken = 0;
 
-type CameraRequest = { kind: 'focus'; nodeId: string } | { kind: 'fit' } | { kind: 'reset' };
+type CameraRequest =
+  | { kind: 'focus'; nodeId: string }
+  | { kind: 'fit' }
+  | { kind: 'frame'; direction: [number, number, number] }
+  | { kind: 'reset' };
 
 const nextCamera = (command: CameraRequest): CameraCommand => {
   cameraSeq += 1;
-  return command.kind === 'focus'
-    ? { kind: 'focus', nodeId: command.nodeId, seq: cameraSeq }
-    : { kind: command.kind, seq: cameraSeq };
+  if (command.kind === 'focus') return { kind: 'focus', nodeId: command.nodeId, seq: cameraSeq };
+  if (command.kind === 'frame') return { kind: 'frame', direction: command.direction, seq: cameraSeq };
+  return { kind: command.kind, seq: cameraSeq };
 };
 
 function toLayoutNodes(nodes: GraphNode[]): LayoutNode[] {
@@ -308,6 +315,7 @@ export const useWorkspaceStore = create<WorkspaceState>()((set, get) => {
     },
 
     fitView: () => set({ camera: nextCamera({ kind: 'fit' }) }),
+    frameView: (direction) => set({ camera: nextCamera({ kind: 'frame', direction }) }),
     resetCamera: () => set({ camera: nextCamera({ kind: 'reset' }) }),
 
     traceTo: (targetId) => {

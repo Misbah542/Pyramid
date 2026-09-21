@@ -66,7 +66,7 @@ export function flowLayout(request: LayoutRequest): Map<string, Vec3> {
   }
 
   const moduleOf = new Map(nodes.map((node) => [node.id, node.moduleId ?? 'root']));
-  const layerGap = 26 * spread;
+  const layerGap = 21 * spread;
   const offsetX = ((maxLayer + 1) * layerGap) / 2;
 
   for (const [layerIndex, members] of byLayer) {
@@ -77,7 +77,7 @@ export function flowLayout(request: LayoutRequest): Map<string, Vec3> {
     });
 
     const columns = Math.max(1, Math.ceil(Math.sqrt(members.length)));
-    const cell = 5.6 * spread;
+    const cell = 7.2 * spread;
     members.forEach((id, index) => {
       const column = index % columns;
       const row = Math.floor(index / columns);

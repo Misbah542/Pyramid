@@ -40,14 +40,17 @@ export function WorkspaceTopBar() {
       <div className="mx-1 hidden h-5 w-px bg-line sm:block" />
 
       {repository ? (
-        <div className="flex min-w-0 items-center gap-2">
-          <span className="truncate font-mono text-xs text-ink" title={repository.fullName}>
+        <div className="flex min-w-0 items-center gap-2 overflow-hidden">
+          <span className="shrink-0 truncate font-mono text-xs text-ink" title={repository.fullName}>
             {repository.fullName}
           </span>
-          <span className="hidden items-center gap-1 rounded-sm border border-line bg-elevated/60 px-1.5 py-0.5 font-mono text-2xs text-muted md:inline-flex">
-            <GitBranch className="h-3 w-3" />
-            {repository.branch}
-            {repository.commit ? <span className="text-faint">@{repository.commit.slice(0, 7)}</span> : null}
+          <span
+            className="hidden max-w-[16rem] shrink items-center gap-1 overflow-hidden whitespace-nowrap rounded-sm border border-line bg-elevated/60 px-1.5 py-0.5 font-mono text-2xs text-muted md:inline-flex"
+            title={`${repository.branch}${repository.commit ? ` @ ${repository.commit}` : ''}`}
+          >
+            <GitBranch className="h-3 w-3 shrink-0" />
+            <span className="truncate">{repository.branch}</span>
+            {repository.commit ? <span className="shrink-0 text-faint">@{repository.commit.slice(0, 7)}</span> : null}
           </span>
           {repository.isDemo ? <Badge tone="accent">Demo repository</Badge> : null}
           {graph?.analysisStatus === 'partial' ? <Badge tone="warning">Partial analysis</Badge> : null}
@@ -70,12 +73,22 @@ export function WorkspaceTopBar() {
 
         <LayoutSwitcher value={layoutMode} onChange={setLayoutMode} />
 
-        <div className="mx-0.5 h-5 w-px bg-line" />
+        <div className="mx-0.5 hidden h-5 w-px bg-line md:block" />
 
-        <IconButton label="Toggle explorer" active={explorerOpen} onClick={() => togglePanel('explorer')}>
+        <IconButton
+          label="Toggle explorer"
+          active={explorerOpen}
+          onClick={() => togglePanel('explorer')}
+          className="hidden md:inline-flex"
+        >
           <PanelLeft className="h-4 w-4" />
         </IconButton>
-        <IconButton label="Toggle inspector" active={inspectorOpen} onClick={() => togglePanel('inspector')}>
+        <IconButton
+          label="Toggle inspector"
+          active={inspectorOpen}
+          onClick={() => togglePanel('inspector')}
+          className="hidden md:inline-flex"
+        >
           <PanelRight className="h-4 w-4" />
         </IconButton>
         <IconButton label="Repository insights" active={insightsOpen} onClick={() => togglePanel('insights')}>

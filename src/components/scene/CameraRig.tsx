@@ -57,9 +57,10 @@ export function CameraRig({ command, buffer, animate, radiusOf, onInteract }: Ca
    * and shallow, so the sphere is mostly empty air and the graph ends up a dot
    * in the middle of the viewport. Instead every node is projected onto the
    * camera basis and the distance is the smallest one that keeps them all
-   * inside the frustum.
+   * inside the frustum. The padding also leaves room for the bow on curved
+   * dependency edges, which reach slightly beyond the nodes they connect.
    */
-  const fitDistance = (target: Vector3, direction: Vector3, padding = 1.06) => {
+  const fitDistance = (target: Vector3, direction: Vector3, padding = 1.12) => {
     const perspective = camera as PerspectiveCamera;
     const fov = ((perspective.fov ?? 50) * Math.PI) / 180;
     const tanHalf = Math.tan(fov / 2);
@@ -122,6 +123,17 @@ export function CameraRig({ command, buffer, animate, radiusOf, onInteract }: Ca
       goalPosition.current
         .copy(goalTarget.current)
         .addScaledVector(DEFAULT_DIRECTION, fitDistance(goalTarget.current, DEFAULT_DIRECTION));
+      active.current = true;
+      if (!animate) commit();
+      return;
+    }
+
+    if (command.kind === 'frame') {
+      buffer.centroid(scratch);
+      const target = new Vector3(scratch[0], scratch[1], scratch[2]);
+      viewDirection.set(command.direction[0], command.direction[1], command.direction[2]).normalize();
+      goalTarget.current.copy(target);
+      goalPosition.current.copy(target).addScaledVector(viewDirection, fitDistance(target, viewDirection));
       active.current = true;
       if (!animate) commit();
       return;

@@ -10,8 +10,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { AdaptiveDpr, AdaptiveEvents, Grid, Preload } from '@react-three/drei';
-import { Color, FogExp2 } from 'three';
+import { Color, FogExp2, type PerspectiveCamera } from 'three';
 import type { GraphNode } from '@shared/graph';
+import { LAYOUT_META } from '@/graph/layouts';
 import { computeHighlightedIds, useWorkspaceStore } from '@/store/useWorkspaceStore';
 import { usePrefersReducedMotion, useSettingsStore } from '@/store/useSettingsStore';
 import { readScenePalette } from '@/lib/theme';
@@ -77,7 +78,7 @@ export function GraphScene({ onPerformanceWarning }: GraphSceneProps) {
 
   const [gridY, setGridY] = useState(-24);
   const lastFitted = useRef<string | null>(null);
-  const fitView = useWorkspaceStore((state) => state.fitView);
+  const frameView = useWorkspaceStore((state) => state.frameView);
 
   useEffect(() => {
     if (!layout) return;
@@ -95,9 +96,9 @@ export function GraphScene({ onPerformanceWarning }: GraphSceneProps) {
     const signature = `${graph?.repository.fullName ?? ''}:${layout.mode}`;
     if (lastFitted.current !== signature) {
       lastFitted.current = signature;
-      fitView();
+      frameView(LAYOUT_META[layout.mode].preferredView);
     }
-  }, [layout, buffer, reducedMotion, graph, fitView]);
+  }, [layout, buffer, reducedMotion, graph, frameView]);
 
   const dpr = useMemo<[number, number]>(() => {
     if (quality === 'high') return [1, 2];
@@ -117,7 +118,7 @@ export function GraphScene({ onPerformanceWarning }: GraphSceneProps) {
       }}
       className="h-full w-full"
     >
-      <SceneEnvironment palette={palette} />
+      <SceneEnvironment palette={palette} extent={layout?.extent ?? 120} />
       <PerformanceWatcher onWarning={onPerformanceWarning} />
 
       <ambientLight intensity={theme === 'dark' ? 0.75 : 1.1} />
@@ -203,15 +204,45 @@ export function GraphScene({ onPerformanceWarning }: GraphSceneProps) {
   );
 }
 
-function SceneEnvironment({ palette }: { palette: { background: string; fog: string } }) {
-  const { scene } = useThree();
+/**
+ * Background, fog and field of view.
+ *
+ * Fog density is derived from how big the graph actually is. A fixed density
+ * either does nothing on a small repository or swallows a large one whole —
+ * and on a narrow portrait viewport, where fitting the graph pushes the camera
+ * much further back, a fixed value turns the whole scene black.
+ */
+function SceneEnvironment({
+  palette,
+  extent,
+}: {
+  palette: { background: string; fog: string };
+  extent: number;
+}) {
+  const { scene, camera, size } = useThree();
+
   useEffect(() => {
     scene.background = new Color(palette.background);
-    scene.fog = new FogExp2(new Color(palette.fog).getHex(), 0.0016);
+    const density = 0.12 / Math.max(extent, 24);
+    scene.fog = new FogExp2(new Color(palette.fog).getHex(), density);
     return () => {
       scene.fog = null;
     };
-  }, [scene, palette]);
+  }, [scene, palette, extent]);
+
+  useEffect(() => {
+    const perspective = camera as PerspectiveCamera;
+    if (!perspective.isPerspectiveCamera) return;
+    // A portrait viewport needs a wider lens, or fitting the graph puts the
+    // camera so far away that everything is a speck.
+    const aspect = size.width / Math.max(size.height, 1);
+    const fov = aspect < 0.85 ? 62 : aspect < 1.2 ? 52 : 46;
+    if (perspective.fov !== fov) {
+      perspective.fov = fov;
+      perspective.updateProjectionMatrix();
+    }
+  }, [camera, size]);
+
   return null;
 }
 

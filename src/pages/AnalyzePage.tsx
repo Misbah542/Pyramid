@@ -111,10 +111,12 @@ export default function AnalyzePage() {
     }
     setStages((current) => ({ ...current, layout: 'done', ready: 'done' }));
     const timer = window.setTimeout(() => {
-      navigate(`/workspace?repo=${encodeURIComponent(repo)}`, { replace: true });
+      const search = new URLSearchParams({ repo });
+      if (ref) search.set('ref', ref);
+      navigate(`/workspace?${search.toString()}`, { replace: true });
     }, 420);
     return () => window.clearTimeout(timer);
-  }, [graphReady, layoutPending, navigate, repo]);
+  }, [graphReady, layoutPending, navigate, repo, ref]);
 
   const cancel = () => {
     handle.current?.cancel();
